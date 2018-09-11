@@ -1,0 +1,83 @@
+if (isModule.toBoolean()) {
+    apply plugin: rootProject.ext.plugins.application
+} else {
+    apply plugin: rootProject.ext.plugins.library
+}
+
+
+android {
+    compileSdkVersion rootProject.ext.android.compileSdkVersion
+    buildToolsVersion rootProject.ext.android.buildToolsVersion
+
+
+    defaultConfig {
+        if (isModule.toBoolean()) {
+            applicationId "com.scorpiokara.cloud.movie"
+        }
+        minSdkVersion rootProject.ext.android.minSdkVersion
+        targetSdkVersion rootProject.ext.android.targetSdkVersion
+        versionCode rootProject.ext.android.versionCode
+        versionName rootProject.ext.android.versionName
+
+        //集成模式下Arouter的配置，用于组件间通信的实现，所有使用到 ARouter 的组件和模块都需要加上
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = [moduleName: project.getName()]
+            }
+        }
+
+        sourceSets {
+            main {
+                //控制两种模式下的资源和代码配置情况
+                if (isModule.toBoolean()) {
+                    manifest.srcFile 'src/main/module/AndroidManifest.xml'
+                } else {
+                    manifest.srcFile 'src/main/AndroidManifest.xml'
+                    //集成开发模式下则需要排除debug文件夹中的所有Java文件 例如模拟登陆的activity
+                    java {
+                        exclude 'debug/**'
+                    }
+                    resources {
+                        exclude 'drawable-v24/**'
+                    }
+                }
+            }
+        }
+
+    }
+
+    // 添加 resourcePrefix 配置来固定这个组件中的资源前缀。
+    // 不过 resourcePrefix 配置只能限定 res 中 xml 文件中定义的资源，
+    // 并不能限定图片资源，所以我们在往组件中添加图片资源时要手动限制资源前缀。
+    // 并将多个组件中都会用到的资源放入 Base 模块中。这样我们就可以在最大限度上实现组件间资源的隔离
+    resourcePrefix "movie_"
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+}
+
+dependencies {
+    api fileTree(include: ['*.jar'], dir: 'libs')
+    api project(':base_library')
+    annotationProcessor rootProject.ext.dependencies.arouter_compiler
+
+    //以下SDK开发者请根据需要自行选择
+    //bmob-sdk：Bmob的android sdk包，包含了Bmob的数据存储、文件等服务，以下是最新的bmob-sdk:
+    //如果开发者使用到其他包含了okhttp、okio、rxjava、rxandroid、gson的库，需要从这些库中exclude掉这些已包含在bmobsdk中的包
+    api 'cn.bmob.android:bmob-sdk:3.6.3'
+    //bmob-push：Bmob的推送包
+    //api 'cn.bmob.android:bmob-push:0.8'
+    //bmob-im：Bmob的即时通讯包，注意每个版本的im依赖特定版本的bmob-sdk，具体的依赖关系可查看下面注释[2]
+    //api 'cn.bmob.android:bmob-im:2.1.0@aar'
+    //如果你想应用能够兼容Android6.0，请添加此依赖(org.apache.http.legacy.jar)
+    api 'cn.bmob.android:http-legacy:1.0'
+}

@@ -1,0 +1,1 @@
+include ':app', ':movie_module', ':base_library', ':base_component', ':ui_module'

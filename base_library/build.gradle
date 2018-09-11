@@ -1,0 +1,49 @@
+apply plugin: rootProject.ext.plugins.library
+
+android {
+    compileSdkVersion rootProject.ext.android.compileSdkVersion
+    buildToolsVersion rootProject.ext.android.buildToolsVersion
+
+    defaultConfig {
+        minSdkVersion rootProject.ext.android.minSdkVersion
+        targetSdkVersion rootProject.ext.android.targetSdkVersion
+        versionCode rootProject.ext.android.versionCode
+        versionName rootProject.ext.android.versionName
+
+        //集成模式下Arouter的配置，用于组件间通信的实现
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = [moduleName: project.getName()]
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+}
+
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    //这里需要注意的是采用的时api的方式，因为implementation指令是不对外公开的，也就是说其他业务组件依赖common_module后仍然无法引用
+    api rootProject.ext.dependencies.appcompat_v7
+    api rootProject.ext.dependencies.support
+    api rootProject.ext.dependencies.support_v13
+    api rootProject.ext.dependencies.design
+    api rootProject.ext.dependencies.constraint
+    api(rootProject.ext.dependencies.arouter_api) {
+        //arouter中v4包版本不一致，排除
+        exclude group: 'com.android.support:support-v4'
+    }
+    annotationProcessor rootProject.ext.dependencies.arouter_compiler
+    api rootProject.ext.dependencies.glide
+    annotationProcessor rootProject.ext.dependencies.glide_compiler
+    api project(':base_component')
+
+}
+
